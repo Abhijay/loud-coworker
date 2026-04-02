@@ -19,7 +19,7 @@ struct VolumeView: View {
 
     private var header: some View {
         HStack {
-            Text("Volume Monitor")
+            Text("Loud Coworker")
                 .font(.headline)
             Spacer()
             Button(action: {

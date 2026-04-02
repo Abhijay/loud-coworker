@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 @main
-struct VolumeControlApp {
+struct LoudCoworkerApp {
     static func main() {
         let app = NSApplication.shared
         let delegate = AppDelegate()

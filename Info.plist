@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>com.abhijay.volume-control</string>
+    <string>com.abhijay.loud-coworker</string>
     <key>CFBundleName</key>
-    <string>VolumeControl</string>
+    <string>Loud Coworker</string>
     <key>CFBundleExecutable</key>
-    <string>VolumeControl</string>
+    <string>LoudCoworker</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -15,6 +15,6 @@
     <key>LSUIElement</key>
     <true/>
     <key>NSMicrophoneUsageDescription</key>
-    <string>VolumeControl needs microphone access to monitor your speaking volume in real-time.</string>
+    <string>Loud Coworker needs microphone access to monitor your speaking volume in real-time.</string>
 </dict>
 </plist>

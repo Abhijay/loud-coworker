@@ -1,4 +1,4 @@
-APP_NAME = VolumeControl
+APP_NAME = LoudCoworker
 BUILD_DIR = build
 APP_BUNDLE = $(BUILD_DIR)/$(APP_NAME).app
 SOURCES = $(wildcard Sources/*.swift)
