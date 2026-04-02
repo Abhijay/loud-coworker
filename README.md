@@ -16,8 +16,8 @@ Click the menu bar icon to see a detailed volume meter with peak tracking.
 Requires macOS 14+ and Xcode Command Line Tools.
 
 ```
-git clone https://github.com/Abhijay/volume-control.git
-cd volume-control
+git clone https://github.com/Abhijay/loud-coworker.git
+cd loud-coworker
 make run
 ```
 
