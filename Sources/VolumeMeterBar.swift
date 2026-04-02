@@ -31,7 +31,7 @@ struct VolumeMeterBar: View {
 
         let isLit = segmentPosition < normalizedLevel
         let isPeak = abs(segmentPosition - normalizedPeak) < (1.0 / Float(segmentCount))
-        let color = segmentColor(at: Float(index) / Float(segmentCount))
+        let color = segmentColor(at: segmentPosition)
 
         return RoundedRectangle(cornerRadius: 2)
             .fill(isLit ? color : (isPeak ? color.opacity(0.8) : color.opacity(0.12)))
@@ -41,14 +41,14 @@ struct VolumeMeterBar: View {
         GeometryReader { geo in
             let width = geo.size.width
 
-            let quietPos = CGFloat(normalize(AudioManager.quietThreshold)) * width
-            let moderatePos = CGFloat(normalize(AudioManager.moderateThreshold)) * width
-            let loudPos = CGFloat(normalize(AudioManager.loudThreshold)) * width
+            let quietPos = CGFloat(normalize(AudioManager.quietThresholdDb)) * width
+            let moderatePos = CGFloat(normalize(AudioManager.moderateThresholdDb)) * width
+            let loudPos = CGFloat(normalize(AudioManager.loudThresholdDb)) * width
 
             ZStack(alignment: .leading) {
-                thresholdMark(at: quietPos, label: "-40")
-                thresholdMark(at: moderatePos, label: "-20")
-                thresholdMark(at: loudPos, label: "-10")
+                thresholdMark(at: quietPos, label: "10x")
+                thresholdMark(at: moderatePos, label: "30x")
+                thresholdMark(at: loudPos, label: "100x")
             }
         }
         .frame(height: 14)
@@ -62,14 +62,14 @@ struct VolumeMeterBar: View {
     }
 
     private func normalize(_ db: Float) -> Float {
-        let clamped = max(AudioManager.dbFloor, min(AudioManager.dbCeiling, db))
-        return (clamped - AudioManager.dbFloor) / (AudioManager.dbCeiling - AudioManager.dbFloor)
+        let clamped = max(AudioManager.relativeFloor, min(AudioManager.relativeCeiling, db))
+        return (clamped - AudioManager.relativeFloor) / (AudioManager.relativeCeiling - AudioManager.relativeFloor)
     }
 
     private func segmentColor(at position: Float) -> Color {
-        let quietNorm = normalize(AudioManager.quietThreshold)
-        let moderateNorm = normalize(AudioManager.moderateThreshold)
-        let loudNorm = normalize(AudioManager.loudThreshold)
+        let quietNorm = normalize(AudioManager.quietThresholdDb)
+        let moderateNorm = normalize(AudioManager.moderateThresholdDb)
+        let loudNorm = normalize(AudioManager.loudThresholdDb)
 
         if position < quietNorm { return .green }
         if position < moderateNorm { return .yellow }

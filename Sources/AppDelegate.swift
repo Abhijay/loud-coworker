@@ -4,7 +4,7 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
-    private var popover: NSPopover!
+    private var floatingPanel: NSPanel!
     private let audioManager = AudioManager()
     private var cancellables = Set<AnyCancellable>()
 
@@ -14,44 +14,85 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = statusItem.button {
             button.image = NSImage(
                 systemSymbolName: "waveform",
-                accessibilityDescription: "Volume Monitor"
+                accessibilityDescription: "Loud Coworker"
             )
-            button.action = #selector(togglePopover)
+            button.action = #selector(togglePanel)
             button.target = self
         }
 
         let contentView = VolumeView(audioManager: audioManager)
-        let popover = NSPopover()
-        popover.contentSize = NSSize(width: 300, height: 280)
-        popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: contentView)
-        self.popover = popover
+        let hostingView = NSHostingView(rootView: contentView)
+        hostingView.frame = NSRect(x: 0, y: 0, width: 260, height: 360)
+
+        let panel = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: 260, height: 360),
+            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        panel.contentView = hostingView
+        panel.isFloatingPanel = true
+        panel.level = .floating
+        panel.title = "Loud Coworker"
+        panel.titleVisibility = .visible
+        panel.titlebarAppearsTransparent = true
+        panel.standardWindowButton(.closeButton)?.isHidden = true
+        panel.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        panel.standardWindowButton(.zoomButton)?.isHidden = true
+        panel.isMovableByWindowBackground = true
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.hidesOnDeactivate = false
+
+        if let screen = NSScreen.main {
+            let screenFrame = screen.visibleFrame
+            let x = screenFrame.maxX - 276 - 16
+            let y = screenFrame.maxY - 376 - 16
+            panel.setFrameOrigin(NSPoint(x: x, y: y))
+        }
+
+        self.floatingPanel = panel
 
         audioManager.requestPermissionAndStart()
 
-        audioManager.$currentLevel
-            .combineLatest(audioManager.$category)
+        audioManager.$relativeLevel
+            .combineLatest(audioManager.$category, audioManager.$isSpeaking, audioManager.$isCalibrating)
             .receive(on: RunLoop.main)
             .throttle(for: .milliseconds(100), scheduler: RunLoop.main, latest: true)
-            .sink { [weak self] level, category in
-                self?.updateStatusBar(level: level, category: category)
+            .sink { [weak self] level, category, speaking, calibrating in
+                if calibrating {
+                    self?.showCalibratingIcon()
+                } else {
+                    self?.updateStatusBar(level: level, category: category, speaking: speaking)
+                }
             }
             .store(in: &cancellables)
     }
 
-    @objc private func togglePopover() {
-        guard let button = statusItem.button else { return }
-
-        if popover.isShown {
-            popover.performClose(nil)
+    @objc private func togglePanel() {
+        if floatingPanel.isVisible {
+            floatingPanel.orderOut(nil)
         } else {
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-            popover.contentViewController?.view.window?.makeKey()
+            floatingPanel.orderFront(nil)
         }
     }
 
-    private func updateStatusBar(level: Float, category: VolumeCategory) {
+    private func updateStatusBar(level: Float, category: VolumeCategory, speaking: Bool) {
         guard let button = statusItem.button else { return }
+
+        if !speaking {
+            let image = NSImage(
+                systemSymbolName: "speaker.wave.1",
+                accessibilityDescription: "Loud Coworker"
+            )
+            image?.isTemplate = true
+            button.image = image
+            button.title = ""
+            button.attributedTitle = NSAttributedString()
+            return
+        }
 
         let color: NSColor
         switch category {
@@ -68,7 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .loud, .tooLoud: symbolName = "speaker.wave.3"
         }
 
-        let dbText = String(format: " %.0f dB", level)
+        let dbText = String(format: " +%.0f dB", level)
         let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .medium)
         let textAttrs: [NSAttributedString.Key: Any] = [.font: font, .foregroundColor: color]
         let textSize = (dbText as NSString).size(withAttributes: textAttrs)
@@ -108,6 +149,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         composedImage.isTemplate = false
 
         button.image = composedImage
+        button.title = ""
+        button.attributedTitle = NSAttributedString()
+    }
+
+    private func showCalibratingIcon() {
+        guard let button = statusItem.button else { return }
+        let image = NSImage(
+            systemSymbolName: "waveform",
+            accessibilityDescription: "Calibrating"
+        )
+        image?.isTemplate = true
+        button.image = image
         button.title = ""
         button.attributedTitle = NSAttributedString()
     }
